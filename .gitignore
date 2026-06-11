@@ -1,0 +1,49 @@
+# Binary files and build artifacts
+bin/
+kervan
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test and coverage artifacts
+*.test
+*.out
+*.prof
+coverage/
+coverage.html
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Dependency directories
+# (Uncomment if you prefer not to check in the vendor directory)
+# vendor/
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Configurations and Secrets
+# Ignore local config files but keep standard/example configs checked in
+configs/*.local.yaml
+configs/*.local.yml
+configs/kervan.yaml
+configs/kervan.yml
+.env
+.env.local
+.env.*.local
