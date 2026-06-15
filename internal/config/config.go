@@ -12,6 +12,7 @@ type Config struct {
 	Listeners   []ListenerConfig `yaml:"listeners"`
 	Upstream    UpstreamConfig   `yaml:"upstream"`
 	Session     SessionConfig    `yaml:"session"`
+	Buffer      BufferConfig     `yaml:"buffer"`
 	MetricsAddr string           `yaml:"metrics_addr"`
 }
 
@@ -29,6 +30,15 @@ type SessionConfig struct {
 	ShardCount     uint32        `yaml:"shard_count"`
 	IdleTimeout    time.Duration `yaml:"idle_timeout"`
 	ReadBufferSize int           `yaml:"read_buffer_size"`
+}
+
+type BufferConfig struct {
+	MaxEntries         uint32        `yaml:"max_entries"`
+	MaxBytes           uint64        `yaml:"max_bytes"`
+	InlineThreshold    int           `yaml:"inline_threshold"`
+	MaxFrameSize       int           `yaml:"max_frame_size"`
+	BackpressurePolicy string        `yaml:"backpressure_policy"`
+	BlockTimeout       time.Duration `yaml:"block_timeout"`
 }
 
 func Load(path string) (*Config, error) {

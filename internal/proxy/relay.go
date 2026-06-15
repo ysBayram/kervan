@@ -4,8 +4,12 @@ import (
 	"log/slog"
 	"time"
 
+	"errors"
+
+	"github.com/ysBayram/kervan/internal/buffer"
 	"github.com/ysBayram/kervan/internal/netpoll"
 	"github.com/ysBayram/kervan/internal/session"
+	"github.com/ysBayram/kervan/internal/protocol/ws"
 	"golang.org/x/sys/unix"
 )
 
@@ -36,23 +40,44 @@ func (s *Server) handleClientRead(ev netpoll.Event, local *workerLocal) {
 }
 
 func (s *Server) handleUpstreamWrite(ev netpoll.Event) {
-	// Placeholder: Phase 2+ will implement FlushScheduler drain
+	sess := s.fdReg.Lookup(int(ev.FD))
+	if sess == nil {
+		return
+	}
+	cs, ok := sess.(*session.ClientSession)
+	if !ok || cs.RingBuffer == nil {
+		return
+	}
+	if err := s.flushScheduler.Drain(cs, s.bytePool); err != nil {
+		slog.Debug("flush drain error", "clientID", cs.ClientID, "error", err)
+	}
 }
 
 func (s *Server) forwardClientPayload(cs *session.ClientSession, payload []byte) error {
-	// Phase 1: direct upstream write (no buffering)
-	// Phase 2: if not Active → ringBuffer.Enqueue
 	state := cs.GetState()
 	switch state {
 	case session.StateActive:
 		return s.writeUpstream(cs, payload)
 	case session.StateFrozen, session.StateDraining:
-		// No ring buffer in Phase 1; drop payload
-		slog.Debug("payload dropped (no buffer in Phase 1)", "clientID", cs.ClientID)
-		return nil
+		return s.enqueueBuffer(cs, payload)
 	default:
 		return session.ErrSessionClosed
 	}
+}
+
+func (s *Server) enqueueBuffer(cs *session.ClientSession, payload []byte) error {
+	if cs.RingBuffer == nil {
+		slog.Debug("no ring buffer attached", "clientID", cs.ClientID)
+		return nil
+	}
+	err := cs.RingBuffer.Enqueue(payload)
+	if errors.Is(err, buffer.ErrWouldBlock) {
+		slog.Debug("buffer full, parking client read", "clientID", cs.ClientID)
+	}
+	if errors.Is(err, buffer.ErrBufferFull) && cs.Protocol == session.ProtocolWebSocket {
+		ws.SendClose(nil, 1013)
+	}
+	return err
 }
 
 func (s *Server) writeUpstream(cs *session.ClientSession, payload []byte) error {

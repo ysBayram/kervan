@@ -12,4 +12,11 @@ session:
   shard_count: 256
   idle_timeout: 15m
   read_buffer_size: 4096
+buffer:
+  max_entries: 1024
+  max_bytes: 2097152
+  inline_threshold: 256
+  max_frame_size: 65536
+  backpressure_policy: drop_oldest
+  block_timeout: 5s
 metrics_addr: ":9090"
