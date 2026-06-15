@@ -9,9 +9,11 @@ import (
 	"sync"
 
 	"github.com/ysBayram/kervan/internal/config"
+	"github.com/ysBayram/kervan/internal/flush"
 	"github.com/ysBayram/kervan/internal/metrics"
 	"github.com/ysBayram/kervan/internal/netpoll"
 	"github.com/ysBayram/kervan/internal/session"
+	"github.com/ysBayram/kervan/pkg/buffer"
 )
 
 type workerLocal struct {
@@ -19,14 +21,16 @@ type workerLocal struct {
 }
 
 type Server struct {
-	cfg      *config.Config
-	poller   netpoll.Poller
-	sessions *session.SessionManager
-	fdReg    *netpoll.FDRegistry
-	metrics  *metrics.Registry
-	nodeID   string
-	mu       sync.Mutex
-	listeners []net.Listener
+	cfg            *config.Config
+	poller         netpoll.Poller
+	sessions       *session.SessionManager
+	fdReg          *netpoll.FDRegistry
+	metrics        *metrics.Registry
+	nodeID         string
+	mu             sync.Mutex
+	listeners      []net.Listener
+	bytePool       *buffer.Pool
+	flushScheduler *flush.Scheduler
 }
 
 func NewServer(cfg *config.Config) (*Server, error) {
@@ -42,13 +46,18 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		return nil, err
 	}
 
+	bytePool := buffer.NewPool()
+	flushSched := flush.NewScheduler(nil) // writer wired during Run
+
 	return &Server{
-		cfg:      cfg,
-		poller:   poller,
-		sessions: session.NewManager(cfg.Session),
-		fdReg:    netpoll.NewFDRegistry(int(rid.Cur)),
-		metrics:  reg,
-		nodeID:   cfg.NodeID,
+		cfg:            cfg,
+		poller:         poller,
+		sessions:       session.NewManager(cfg.Session),
+		fdReg:          netpoll.NewFDRegistry(int(rid.Cur)),
+		metrics:        reg,
+		nodeID:         cfg.NodeID,
+		bytePool:       bytePool,
+		flushScheduler: flushSched,
 	}, nil
 }
 

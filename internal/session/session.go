@@ -3,6 +3,8 @@ package session
 import (
 	"sync/atomic"
 	"time"
+
+	"github.com/ysBayram/kervan/internal/buffer"
 )
 
 type State uint32
@@ -33,6 +35,7 @@ type ClientSession struct {
 	ShardIdx     uint8
 	CreatedAt    int64
 	LastActivity atomic.Int64
+	RingBuffer   *buffer.RingBuffer
 	_            [64]byte
 }
 
@@ -46,6 +49,18 @@ func (s *ClientSession) GetState() State {
 
 func (s *ClientSession) Touch() {
 	s.LastActivity.Store(nowNano())
+}
+
+func (s *ClientSession) Freeze() bool {
+	return s.CASState(StateActive, StateFrozen)
+}
+
+func (s *ClientSession) Thaw() bool {
+	return s.CASState(StateFrozen, StateDraining)
+}
+
+func (s *ClientSession) AttachBuffer(rb *buffer.RingBuffer) {
+	s.RingBuffer = rb
 }
 
 func nowNano() int64 {
