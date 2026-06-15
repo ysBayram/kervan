@@ -348,11 +348,12 @@ metrics:
 |----------|-------------|
 | [Technical Design Document](docs/technical-design-document.md) | System architecture, components, and performance targets |
 | [Architectural Decision Records](docs/architectural-decision-records.md) | Core design trade-offs (ADR-001 – ADR-003) |
+| [AGENTS.md](AGENTS.md) | Repository overview, branch references, invariants |
 | [Implementation Plan](docs/implementation/README.md) | Four-phase development roadmap |
-| [Phase 1 — Core Engine](docs/implementation/phase-1-core-engine.md) | NetPoller + SessionManager |
-| [Phase 2 — Ring Buffer](docs/implementation/phase-2-ring-buffer.md) | Buffering and backpressure |
-| [Phase 3 — Failover](docs/implementation/phase-3-failover-routing.md) | Freeze/Thaw lifecycle |
-| [Phase 4 — Cluster](docs/implementation/phase-4-distributed-cluster.md) | Distributed state and K8s topology |
+| [Phase 1 Result — Core Engine](docs/implementation/phase-1-result.md) | NetPoller + SessionManager (implemented) |
+| [Phase 2 Result — Ring Buffer](docs/implementation/phase-2-result.md) | Buffering and backpressure (implemented) |
+| [Phase 3 Result — Failover](docs/implementation/phase-3-result.md) | Freeze/Thaw lifecycle (implemented) |
+| [Phase 4 Result — Cluster](docs/implementation/phase-4-result.md) | Distributed state and K8s topology (implemented) |
 
 ---
 
