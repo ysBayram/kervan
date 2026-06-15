@@ -64,16 +64,126 @@ Kervan is for teams operating stateful, long-lived TCP/WebSocket connections who
 
 ## Architecture
 
+### High-Level Topology
+
 ```
-Clients ──▶ Kervan Node ──▶ Backend Pool
-              │
-              ├── NetPoller (epoll/kqueue)
-              ├── SessionManager (sharded map)
-              ├── Ring Buffer (per session)
-              └── TargetRegistry (health + routing)
-              │
-              └── Coordination Store (etcd / Redis) — metadata only
+                          ┌─────────────────────────────────────────────────────┐
+                          │                   Clients                          │
+                          │  (IoT devices, OCPP chargers, browsers, apps)      │
+                          └──────────┬──────────┬────────────────────────┬──────┘
+                                     │          │                        │
+                          TCP / WebSocket       │                        │
+                                     │          │                        │
+               ┌─────────────────────▼──────────▼────────────────────────▼──────┐
+               │                     Kervan Cluster                            │
+               │                                                                │
+               │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+               │  │   Kervan     │  │   Kervan     │  │   Kervan     │   ...   │
+               │  │   Node 1     │  │   Node 2     │  │   Node 3     │         │
+               │  │              │  │              │  │              │         │
+               │  │ ┌──────────┐ │  │ ┌──────────┐ │  │ ┌──────────┐ │         │
+               │  │ │ Session  │ │  │ │ Session  │ │  │ │ Session  │ │         │
+               │  │ │ Manager  │ │  │ │ Manager  │ │  │ │ Manager  │ │         │
+               │  │ │ (256 shd)│ │  │ │ (256 shd)│ │  │ │ (256 shd)│ │         │
+               │  │ ├──────────┤ │  │ ├──────────┤ │  │ ├──────────┤ │         │
+               │  │ │ RingBuf  │ │  │ │ RingBuf  │ │  │ │ RingBuf  │ │         │
+               │  │ │ per sess │ │  │ │ per sess │ │  │ │ per sess │ │         │
+               │  │ ├──────────┤ │  │ ├──────────┤ │  │ ├──────────┤ │         │
+               │  │ │ Target   │ │  │ │ Target   │ │  │ │ Target   │ │         │
+               │  │ │ Registry │ │  │ │ Registry │ │  │ │ Registry │ │         │
+               │  │ └──────────┘ │  │ └──────────┘ │  │ └──────────┘ │         │
+               │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘         │
+               │         │                 │                 │                 │
+               │         └─────────────────┼─────────────────┘                 │
+               │                           │                                   │
+               │              ┌────────────▼────────────┐                      │
+               │              │  Coordination Store     │                      │
+               │              │  (etcd / Redis Cluster)  │                      │
+               │              │  metadata only, no data  │                      │
+               │              └─────────────────────────┘                      │
+               └───────────────────────────────────────────────────────────────┘
+                                    │
+                          ┌─────────┴──────────┐
+                          │   Backend Pool     │
+                          │  (upstream services)│
+                          └────────────────────┘
 ```
+
+### Node Internal Architecture
+
+```
+┌──────────────────────────────────────────────┐
+│               Kervan Node                    │
+│                                              │
+│  ┌──────────────────────────────────────┐    │
+│  │           NetPoller                  │    │
+│  │  (epoll on Linux / kqueue on macOS)  │    │
+│  │  - FDRegistry                        │    │
+│  │  - Fixed worker pool (no goroutine   │    │
+│  │    per connection)                   │    │
+│  └──────────────┬───────────────────────┘    │
+│                 │                             │
+│  ┌──────────────▼───────────────────────┐    │
+│  │         Accept Loop                 │    │
+│  │  TCP / WebSocket listener           │    │
+│  └──────────────┬───────────────────────┘    │
+│                 │                             │
+│  ┌──────────────▼───────────────────────┐    │
+│  │       SessionManager (256 shards)    │    │
+│  │  - ClientSession per connection      │    │
+│  │  - Atomic state (Created, Active,    │    │
+│  │    Frozen, Draining, Closed)         │    │
+│  │  - Each session has a RingBuffer     │    │
+│  └──────────────┬───────────────────────┘    │
+│                 │                             │
+│  ┌──────────────▼───────────────────────┐    │
+│  │       Relay / Dispatch              │    │
+│  │  - Active: passthrough to upstream   │    │
+│  │  - Frozen: buffer to RingBuffer      │    │
+│  │  - Draining: flush + passthrough     │    │
+│  └──────────────┬───────────────────────┘    │
+│                 │                             │
+│  ┌──────────────▼───────────────────────┐    │
+│  │        TargetRegistry               │    │
+│  │  - Consistent-hash router           │    │
+│  │  - Health probes (TCP, HTTP, pass.) │    │
+│  │  - Discovery (static / K8s)         │    │
+│  │  - FreezeController (Freeze/Thaw)   │    │
+│  └──────────────┬───────────────────────┘    │
+│                 │                             │
+│  ┌──────────────▼───────────────────────┐    │
+│  │     Coordination Layer (multi-node)  │    │
+│  │  - Session lease manager             │    │
+│  │  - Routing epoch watcher             │    │
+│  │  - Graceful degradation controller   │    │
+│  │  - etcd / Redis adapters             │    │
+│  └──────────────────────────────────────┘    │
+│                                              │
+│  ┌──────────────────────────────────────┐    │
+│  │     FlushScheduler                   │    │
+│  │  - At-least-once drain per session   │    │
+│  │  - ACK tracking                      │    │
+│  └──────────────────────────────────────┘    │
+│                                              │
+│  ┌──────────────────────────────────────┐    │
+│  │     Metrics                          │    │
+│  │  - Buffer depth, drops, flush totals │    │
+│  │  - Session count by state            │    │
+│  │  - Target health, routing epoch      │    │
+│  └──────────────────────────────────────┘    │
+└──────────────────────────────────────────────┘
+```
+
+### Design Principles
+
+| Principle | Implementation |
+|-----------|---------------|
+| **No goroutine-per-connection** | NetPoller owns all fds, fixed worker pool dispatches events |
+| **Single writer per session** | Poll worker owns the fd exclusively |
+| **Zero-alloc hot path** | sync.Pool buffer reuse, inline small frames, atomic CAS |
+| **Payload stays local** | Ring buffer data never leaves the owning node |
+| **Metadata only in store** | Coordination holds leases, epochs, target health — not payload bytes |
+| **Shared-nothing** | Each node owns its sessions independently; coordination for discovery |
 
 For detailed architecture, see:
 
