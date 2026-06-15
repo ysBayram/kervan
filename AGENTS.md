@@ -2,7 +2,7 @@
 
 ## Status
 
-This repo is **design / planning phase only** — no `go.mod`, no `*.go`, no Makefile, no CI. Everything lives in `/docs/`. Do not expect code to exist; the authoritative source of truth for intended architecture is `/docs/technical-design-document.md`.
+This repo starts as **design / planning phase** on `main`. Implementation lives on phase branches (`phase-1-core-engine` → `phase-4-distributed-cluster`). On `main` there are no `*.go` files yet — the authoritative design source remains `/docs/technical-design-document.md`. Do not write code on `main`.
 
 ## Authoritative docs
 
@@ -13,6 +13,19 @@ This repo is **design / planning phase only** — no `go.mod`, no `*.go`, no Mak
 | `docs/implementation/` | Phased roadmap: Phase 1 (Core) → 2 (Ring Buffer) → 3 (Failover) → 4 (Cluster) |
 
 Cross-reference all docs before writing code — design decisions are scattered across them.
+
+## Implementation branches
+
+Each phase has a dedicated branch with micro commits and an implementation result:
+
+| Branch | Base | Files | Results |
+|--------|------|-------|---------|
+| `phase-1-core-engine` | `main` | 27+ | `docs/implementation/phase-1-result.md` |
+| `phase-2-ring-buffer` | `phase-1-core-engine` | 40+ | `docs/implementation/phase-2-result.md` |
+| `phase-3-failover-routing` | `phase-2-ring-buffer` | 60+ | `docs/implementation/phase-3-result.md` |
+| `phase-4-distributed-cluster` | `phase-3-failover-routing` | 70+ | `docs/implementation/phase-4-result.md` |
+
+Branches are chained: each rebases on the prior phase. Use `git log` on a branch to see its micro-commit history before working.
 
 ## Planned stack
 
