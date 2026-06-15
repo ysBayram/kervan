@@ -391,32 +391,85 @@ See the [Implementation Plan](docs/implementation/README.md) for Definition of D
 
 ## Development
 
-TBD
+### Prerequisites
+
+- Go ≥1.22
+- Linux (for epoll) or macOS (for kqueue)
+- `golangci-lint` (for linting)
+
+### Commands
 
 ```bash
-make build      # TBD
-make test       # TBD
-make bench      # TBD — allocation gate on hot-path benchmarks
-make lint       # TBD
+make build      # go build -o bin/kervan ./cmd/kervan
+make test       # go test -race ./...
+make bench      # go test -bench=. -benchmem  (allocation gate on hot path)
+make lint       # golangci-lint run
+go fmt ./...    # format all files
 ```
 
 ### Project Layout
 
-TBD — planned structure follows [golang-standards/project-layout](https://github.com/golang-standards/project-layout):
+The project follows the [golang-standards/project-layout](https://github.com/golang-standards/project-layout) convention:
 
 ```
 kervan/
-├── cmd/kervan/          # Entrypoint
-├── internal/            # Private application code
-│   ├── netpoll/
-│   ├── session/
-│   ├── buffer/
-│   ├── target/
-│   └── proxy/
-├── pkg/                 # Public libraries
-├── configs/             # Example configuration
-└── docs/                # Design documents
+├── cmd/kervan/              # Entrypoint
+├── internal/                # Private application packages
+│   ├── buffer/              # RingBuffer + backpressure policies
+│   ├── config/              # YAML config loading + validation
+│   ├── coordination/        # Distributed coordination (leases, epoch, degrade)
+│   │   ├── etcd/            # etcd store adapter
+│   │   └── redis/           # Redis store adapter
+│   ├── discovery/           # Target discovery (static, K8s)
+│   ├── flush/               # FlushScheduler (at-least-once drain)
+│   ├── health/              # Health probes (TCP, HTTP, passive)
+│   ├── metrics/             # Prometheus metrics
+│   ├── netpoll/             # NetPoller (epoll/kqueue + FDRegistry)
+│   ├── node/                # Node identity
+│   ├── protocol/            # Protocol handlers
+│   │   ├── tcp/             # Raw TCP stream
+│   │   └── ws/              # WebSocket handshake + framing
+│   ├── proxy/               # Accept loop, relay, server
+│   ├── session/             # SessionManager (256 shards) + ClientSession
+│   └── target/              # Target model, registry, router, FreezeController
+├── pkg/                     # Public libraries
+│   ├── api/                 # Shared API types
+│   └── buffer/              # Size-class sync.Pool allocator
+├── configs/                 # Example YAML configuration
+├── deploy/                  # Deployment manifests
+│   ├── kubernetes/          # Raw K8s manifests (Namespace, ConfigMap, Deployment, Service, PDB)
+│   └── helm/kervan/         # Helm chart
+└── docs/                    # Design documents and implementation results
+    └── implementation/      # Phase result docs
 ```
+
+### Branch Strategy
+
+Implementation is organized into chained phase branches:
+
+| Branch | Base | Content |
+|--------|------|---------|
+| `phase-1-core-engine` | `main` | NetPoller, SessionManager, config, accept loop, relay |
+| `phase-2-ring-buffer` | `phase-1-core-engine` | RingBuffer, backpressure, FlushScheduler |
+| `phase-3-failover-routing` | `phase-2-ring-buffer` | Target model, registry, probes, Freeze/Thaw |
+| `phase-4-distributed-cluster` | `phase-3-failover-routing` | Coordination, leases, K8s manifests, Helm |
+
+Each branch rebases on its predecessor. See `git log` on each branch for micro-commit history.
+
+### Testing
+
+```bash
+# All unit tests with race detector
+make test
+
+# Specific package tests
+go test -race ./internal/buffer/...
+
+# Benchmarks
+go test -bench=. -benchmem ./internal/buffer/...
+```
+
+All four phases have passing unit tests. Integration tests (etcd testcontainers, multi-node clusters) and benchmark gates are pending Go toolchain installation in this environment.
 
 ---
 
