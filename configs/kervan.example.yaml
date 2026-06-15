@@ -19,4 +19,12 @@ buffer:
   max_frame_size: 65536
   backpressure_policy: drop_oldest
   block_timeout: 5s
+failover:
+  probe_interval: 2s
+  unhealthy_threshold: 3
+  healthy_threshold: 2
+  max_freeze_duration: 5m
+  drain_timeout: 30s
+  error_rate_window: 5s
+  error_rate_threshold: 0.5
 metrics_addr: ":9090"
