@@ -11,6 +11,12 @@
 
 ---
 
+## Why Kervan?
+
+Stateful proxies fail in subtle ways. When an upstream backend restarts or crashes, most proxies either drop the client connection or discard in-flight payloads. For long-lived sessions (IoT device telemetry, EV charging transactions, financial market data feeds), a dropped connection means re-authentication, data loss, and cascading retry storms.
+
+Kervan solves this by holding client connections open and buffering payloads in a bounded FIFO ring buffer while the backend recovers — then flushing in strict order once the upstream is healthy again. It is purpose-built for scenarios where **the session is more expensive than the data**.
+
 ## Status
 
 > **Implementation complete.** All four phases (Core Engine → Ring Buffer → Failover Routing → Distributed Cluster) are implemented across dedicated branches with passing unit tests. See the [Implementation Plan](docs/implementation/README.md) for details and [AGENTS.md](AGENTS.md) for branch references.
