@@ -1,9 +1,9 @@
 # Kervan
 
-[![License](https://img.shields.io/badge/license-TBD-lightgrey)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/go-1.22+-blue.svg)](https://go.dev/)
-[![Build Status](https://img.shields.io/badge/build-TBD-lightgrey)](TBD)
-[![Release](https://img.shields.io/badge/release-v0.1.0--alpha-lightgrey)](TBD)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ysBayram/kervan)](https://goreportcard.com/report/github.com/ysBayram/kervan)
+[![Release](https://img.shields.io/badge/release-v0.1.0--alpha-blue)](https://github.com/ysBayram/kervan/releases)
 
 > A connection-resilient, stateful Layer 7 WebSocket/TCP proxy that keeps client sessions alive while buffering payloads during upstream backend failures.
 
