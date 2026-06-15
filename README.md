@@ -195,19 +195,34 @@ For detailed architecture, see:
 
 ## Quick Start
 
-TBD
+### 1. Clone and build
 
 ```bash
-# Installation and first run — coming in Phase 1
-go install github.com/ysBayram/kervan/cmd/kervan@latest
-kervan -config configs/kervan.yaml
+git clone https://github.com/ysBayram/kervan.git
+cd kervan
+make build                   # produces ./bin/kervan
 ```
+
+### 2. Configure
+
+Copy and edit the example config:
+
+```bash
+cp configs/kervan.example.yaml kervan.yaml
+# edit listeners, upstream targets, buffer settings
+```
+
+### 3. Run
+
+```bash
+./bin/kervan -config kervan.yaml
+```
+
+A single-node instance listens on the configured ports and begins proxying to the defined upstream targets. When an upstream becomes unhealthy, sessions switch to buffering mode automatically.
 
 ---
 
 ## Installation
-
-TBD
 
 ### Prerequisites
 
@@ -219,8 +234,6 @@ TBD
 
 ### From Source
 
-TBD
-
 ```bash
 git clone https://github.com/ysBayram/kervan.git
 cd kervan
@@ -228,18 +241,46 @@ make build
 ./bin/kervan -config configs/kervan.example.yaml
 ```
 
+Make targets:
+
+| Target | Description |
+|--------|-------------|
+| `make build` | Compile `./bin/kervan` |
+| `make test`  | Run all unit tests with race detector |
+| `make bench` | Run benchmarks (allocation gate on hot path) |
+| `make lint`  | Run `golangci-lint` |
+| `go fmt ./...` | Format all Go files |
+
 ### Docker
 
-TBD
+> Docker images are not yet published. Build locally:
 
 ```bash
-docker pull ghcr.io/ysBayram/kervan:latest   # TBD
-docker run -p 8080:8080 -v $(pwd)/configs:/etc/kervan ghcr.io/ysBayram/kervan:latest
+docker build -t kervan:latest .
+docker run -p 8080:8080 -v $(pwd)/configs:/etc/kervan kervan:latest -config /etc/kervan/kervan.yaml
 ```
 
 ### Kubernetes / Helm
 
-TBD — see [Phase 4 deployment manifests](docs/implementation/phase-4-distributed-cluster.md).
+Two deployment options:
+
+**Option 1 — Raw manifests:**
+
+```bash
+kubectl apply -f deploy/kubernetes/namespace.yaml
+kubectl apply -f deploy/kubernetes/configmap.yaml
+kubectl apply -f deploy/kubernetes/deployment.yaml
+kubectl apply -f deploy/kubernetes/service.yaml
+kubectl apply -f deploy/kubernetes/pdb.yaml
+```
+
+**Option 2 — Helm chart:**
+
+```bash
+helm install kervan ./deploy/helm/kervan -f values.yaml
+```
+
+The deployment starts 3 replicas with ClientIP session affinity, a PodDisruptionBudget ensuring minimum 2 available replicas, and coordination via etcd or Redis Cluster.
 
 ---
 
