@@ -13,6 +13,7 @@ type Config struct {
 	Upstream    UpstreamConfig   `yaml:"upstream"`
 	Session     SessionConfig    `yaml:"session"`
 	Buffer      BufferConfig     `yaml:"buffer"`
+	Failover    FailoverConfig   `yaml:"failover"`
 	MetricsAddr string           `yaml:"metrics_addr"`
 }
 
@@ -30,6 +31,16 @@ type SessionConfig struct {
 	ShardCount     uint32        `yaml:"shard_count"`
 	IdleTimeout    time.Duration `yaml:"idle_timeout"`
 	ReadBufferSize int           `yaml:"read_buffer_size"`
+}
+
+type FailoverConfig struct {
+	ProbeInterval      time.Duration `yaml:"probe_interval"`
+	UnhealthyThreshold uint32        `yaml:"unhealthy_threshold"`
+	HealthyThreshold   uint32        `yaml:"healthy_threshold"`
+	MaxFreezeDuration  time.Duration `yaml:"max_freeze_duration"`
+	DrainTimeout       time.Duration `yaml:"drain_timeout"`
+	ErrorRateWindow    time.Duration `yaml:"error_rate_window"`
+	ErrorRateThreshold float64       `yaml:"error_rate_threshold"`
 }
 
 type BufferConfig struct {

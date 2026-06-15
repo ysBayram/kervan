@@ -110,3 +110,25 @@ func (sm *SessionManager) RangeAll(fn func(*ClientSession) bool) {
 		s.mu.RUnlock()
 	}
 }
+
+func (sm *SessionManager) CountByTarget(targetID string) int {
+	var count int
+	sm.RangeAll(func(sess *ClientSession) bool {
+		if sess.TargetID == targetID {
+			count++
+		}
+		return true
+	})
+	return count
+}
+
+func (sm *SessionManager) CountByState(state State) int64 {
+	var count int64
+	sm.RangeAll(func(sess *ClientSession) bool {
+		if sess.GetState() == state {
+			count++
+		}
+		return true
+	})
+	return count
+}
