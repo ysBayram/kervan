@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kervan-config
+  namespace: kervan
+data:
+  kervan.yaml: |
+    node_id: "${POD_NAME}"
+    listeners:
+      - bind: ":8080"
+        protocol: "websocket"
+        max_sessions: 10000
+    session:
+      shard_count: 256
+      idle_timeout: 15m
+      read_buffer_size: 4096
+    buffer:
+      max_entries: 1024
+      max_bytes: 2097152
+      inline_threshold: 256
+      max_frame_size: 65536
+      backpressure_policy: drop_oldest
+    failover:
+      probe_interval: 2s
+      unhealthy_threshold: 3
+      healthy_threshold: 2
+      max_freeze_duration: 5m
+      drain_timeout: 30s
+      error_rate_window: 5s
+      error_rate_threshold: 0.5
+    coordination:
+      backend: etcd
+      lease_ttl: 930s
+      lease_refresh_every: 300s
+      degrade_probe_interval: 5s
+      degrade_threshold: 3
+    metrics_addr: ":9090"

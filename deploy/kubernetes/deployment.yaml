@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kervan
+  namespace: kervan
+  labels:
+    app: kervan
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kervan
+  template:
+    metadata:
+      labels:
+        app: kervan
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      containers:
+        - name: kervan
+          image: kervan:0.1.0-alpha
+          args: ["-config", "/etc/kervan/kervan.yaml"]
+          ports:
+            - containerPort: 8080
+              name: ws
+            - containerPort: 9090
+              name: metrics
+          resources:
+            limits:
+              memory: "24Gi"
+            requests:
+              memory: "16Gi"
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: GOMEMLIMIT
+              value: "20GiB"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/kervan
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: kervan-config
