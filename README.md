@@ -25,13 +25,16 @@ Kervan solves this by holding client connections open and buffering payloads in 
 
 ## Features
 
-- **Connection immutability** — Client-facing WebSocket/TCP sessions survive backend pod crashes, rolling updates, and network degradation
-- **Bounded FIFO buffering** — Per-session ring buffers with configurable backpressure (`DropOldest`, `Reject`, `Block`)
-- **At-least-once delivery** — Buffered payloads flush in order when upstream recovers
-- **High concurrency** — Designed for 10,000+ concurrent stateful connections per node
-- **Zero-allocation hot path** — Event-driven I/O with `sync.Pool` buffer reuse and no goroutine-per-connection
-- **Horizontal scaling** — Shared-nothing architecture with external coordination (etcd / Redis Cluster)
-- **Protocol support** — WebSocket (RFC 6455) and raw TCP byte-stream proxying
+- **Connection immutability** — Client-facing WebSocket/TCP sessions survive backend pod crashes, rolling updates, and network degradation. [Implemented: Phase 1 (passthrough), Phase 3 (Freeze/Thaw lifecycle)]
+- **Bounded FIFO buffering** — Per-session ring buffers with configurable backpressure (`DropOldest`, `Reject`, `Block`), inline threshold (≤256 B), and size-class sync.Pool allocator (256 B – 64 KB). [Implemented: Phase 2]
+- **At-least-once delivery** — Buffered payloads flush in strict FIFO order when upstream recovers. Mid-drain failure returns to Frozen state preserving delivery ordering. [Implemented: Phase 2–3]
+- **High concurrency** — Sharded SessionManager (256 shards, FNV-1a hash), epoll/kqueue edge-triggered I/O, fixed worker pool (no goroutine-per-connection). Designed for 10,000+ concurrent stateful connections per node. [Implemented: Phase 1]
+- **Zero-allocation hot path** — Event-driven I/O with sync.Pool buffer reuse, atomic.Uint32 state transitions, inline small frames avoiding heap. [Implemented: Phase 1–2]
+- **Health-aware routing** — Consistent-hash router with active (TCP, HTTP) and passive (error rate) health probes; targets auto-evicted on failure, restored on recovery. [Implemented: Phase 3]
+- **Freeze/Thaw failover** — Session state machine (Active → Frozen → Draining → Active) triggered by upstream health changes. No dropped front-end connections. [Implemented: Phase 3]
+- **Horizontal scaling** — Shared-nothing architecture with external coordination (etcd / Redis Cluster), routing epoch watcher, session leases, and graceful degradation controller. [Implemented: Phase 4]
+- **Protocol support** — WebSocket (RFC 6455) with zero-copy framing and raw TCP byte-stream proxying. [Implemented: Phase 1]
+- **Kubernetes native** — Helm chart and K8s manifests (Deployment, Service with ClientIP affinity, PodDisruptionBudget). [Implemented: Phase 4]
 
 ---
 
