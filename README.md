@@ -38,14 +38,27 @@ Kervan solves this by holding client connections open and buffering payloads in 
 
 ---
 
+## Who should use
+
+Kervan is for teams operating stateful, long-lived TCP/WebSocket connections who cannot tolerate client reconnect storms or data loss during backend failures. It is **not a general-purpose HTTP reverse proxy** — it targets session-oriented protocols where the cost of re-establishment exceeds the cost of buffering.
+
+| Role | Why Kervan |
+|------|------------|
+| **IoT Platform Engineers** | Thousands of devices reporting telemetry; a backend restart should not force mass reconnection |
+| **EV Charging Operators** | OCCP sessions must survive CSMS rolling updates without losing transaction state |
+| **Financial Data Providers** | Market data feeds must not drop clients during backend failover |
+| **Real-Time Chat / Gaming** | User sessions persist through message broker restarts or blue/green deployments |
+| **Telco / Edge Networking** | Signaling or media-plane flows that require carrier-grade session continuity |
+
 ## Use Cases
 
-| Domain | Scenario |
-|--------|----------|
-| **IoT Gateways** | Devices stay connected while backend services restart |
-| **EV Charging (OCPP)** | Charger sessions persist through CSMS rolling updates |
-| **Financial Tickers** | Market data clients maintain streams during backend failover |
-| **Real-Time Chat** | User connections buffered while message brokers recover |
+| Domain | Scenario | Relevant Kervan Feature |
+|--------|----------|------------------------|
+| **IoT Gateways** | Devices stay connected while backend services restart | Bounded FIFO buffering (Phase 2) + Freeze/Thaw failover (Phase 3) |
+| **EV Charging (OCPP)** | Charger sessions persist through CSMS rolling updates | Connection immutability + at-least-once delivery |
+| **Financial Tickers** | Market data clients maintain streams during backend failover | Consistent-hash routing + passive health probes |
+| **Real-Time Chat** | User connections buffered while message brokers recover | Freeze/Thaw lifecycle + FlushScheduler drain |
+| **Multi-region HA** | Active-active clusters survive region-level outages | Distributed coordination (Phase 4) + session leases |
 
 ---
 
