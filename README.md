@@ -475,40 +475,46 @@ All four phases have passing unit tests. Integration tests (etcd testcontainers,
 
 ## Contributing
 
-TBD
+Contributions are welcome. Before submitting changes:
 
-Contributions are welcome once Phase 1 development begins. Until then:
+1. Review the [Technical Design Document](docs/technical-design-document.md) and [ADRs](docs/architectural-decision-records.md) to understand the architecture
+2. Review [AGENTS.md](AGENTS.md) for branch strategy and coding conventions
+3. Check the [Implementation Plan](docs/implementation/README.md) for open tasks
+4. Open an issue to discuss large changes before submitting a PR
 
-1. Review the [Technical Design Document](docs/technical-design-document.md) and [ADRs](docs/architectural-decision-records.md)
-2. Pick a task from the [Implementation Plan](docs/implementation/README.md)
-3. Open an issue to discuss before submitting large changes
+### Commit Conventions
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat: add ring buffer backpressure policy
+docs: update failover architecture diagram
+fix: correct session state transition on thaw
+```
 
 ### Code of Conduct
 
-TBD
+Please be respectful and constructive. This project is in early development — focus on improving the code and documentation.
 
 ---
 
 ## Security
 
-TBD
-
-To report a security vulnerability, please see [SECURITY.md](SECURITY.md) (TBD).
+To report a security vulnerability, please open a [GitHub Security Advisory](https://github.com/ysBayram/kervan/security/advisories) or email the maintainers directly. Do not disclose vulnerabilities publicly before they are addressed.
 
 ---
 
 ## License
 
-TBD
-
-This project will be released under an open-source license. See [LICENSE](LICENSE) for details once published.
+This project is distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
 ---
 
 ## Acknowledgments
 
-- Named after the **caravanserais** (*kervansaray*) of the ancient Silk Road
+- Named after the **caravanserais** (*kervansaray*) of the ancient Silk Road — waystations where merchants sheltered valuable cargo until the route ahead was safe
 - Inspired by the need for connection-resilient proxying in IoT, OCPP, and real-time systems
+- Built with [gobwas/ws](https://github.com/gobwas/ws) (zero-copy WebSocket), [golang.org/x/sys/unix](https://pkg.go.dev/golang.org/x/sys/unix) (epoll/kqueue), [go.etcd.io/etcd](https://github.com/etcd-io/etcd), and [go-redis](https://github.com/redis/go-redis)
 
 ---
 
@@ -516,7 +522,7 @@ This project will be released under an open-source license. See [LICENSE](LICENS
 
 | Resource | URL |
 |----------|-----|
-| Repository | TBD |
-| Issue Tracker | TBD |
-| Discussions | TBD |
-| Changelog | [CHANGELOG.md](CHANGELOG.md) (TBD) |
+| Repository | [github.com/ysBayram/kervan](https://github.com/ysBayram/kervan) |
+| Issue Tracker | [github.com/ysBayram/kervan/issues](https://github.com/ysBayram/kervan/issues) |
+| Discussions | [github.com/ysBayram/kervan/discussions](https://github.com/ysBayram/kervan/discussions) |
+| Changelog | [CHANGELOG.md](CHANGELOG.md) |
