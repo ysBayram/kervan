@@ -286,26 +286,58 @@ The deployment starts 3 replicas with ClientIP session affinity, a PodDisruption
 
 ## Configuration
 
-TBD
-
-Example configuration will live at `configs/kervan.example.yaml`. Key sections:
+Kervan uses a single YAML configuration file. Full example at [`configs/kervan.example.yaml`](configs/kervan.example.yaml).
 
 ```yaml
+# ---------- listener ----------
 listeners:
   - bind: ":8080"
-    protocol: websocket
+    protocol: websocket    # websocket | tcp
+  - bind: ":9090"
+    protocol: tcp
 
+# ---------- upstream ----------
 upstream:
-  targets: []          # static or discovery-driven
+  targets:
+    - id: "backend-1"
+      addr: "10.0.1.50:3000"
+    - id: "backend-2"
+      addr: "10.0.1.51:3000"
+  discovery:
+    type: static            # static | kubernetes
+    # kubernetes:            # requires build tag k8s
+    #   namespace: default
+    #   label_selector: app=my-backend
 
+# ---------- buffer ----------
 buffer:
-  max_entries: 1024
-  backpressure_policy: drop_oldest
+  max_entries: 1024          # max frames per session buffer
+  max_bytes_per_entry: 65536 # 64 KB
+  backpressure_policy: drop_oldest  # drop_oldest | reject | block
+  inline_threshold: 256      # bytes; ≤ this → stack, > this → pool
 
+# ---------- failover ----------
+failover:
+  probe_interval: 5s         # health check frequency
+  unhealthy_threshold: 3     # failures before marking Unhealthy
+  healthy_threshold: 2       # successes before restoring Active
+  freeze_timeout: 30s        # max time in Frozen before forced action
+
+# ---------- coordination ----------
 coordination:
-  backend: etcd
+  backend: etcd               # etcd | redis
+  node_id: ""                 # defaults to POD_NAME or hostname
   etcd:
     endpoints: ["localhost:2379"]
+    dial_timeout: 5s
+    session_ttl: 15s
+  # redis:
+  #   addrs: ["localhost:6379"]
+  #   session_ttl: 15s
+
+# ---------- metrics ----------
+metrics:
+  prometheus: ":9091"         # Prometheus metrics endpoint (optional)
 ```
 
 ---
