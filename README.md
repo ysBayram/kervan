@@ -358,14 +358,21 @@ metrics:
 
 ## Roadmap
 
-| Phase | Focus | Status |
-|-------|-------|--------|
-| **Phase 1** | High-performance connection handling & sharded session management | TBD |
-| **Phase 2** | In-memory ring buffering & backpressure | TBD |
-| **Phase 3** | Dynamic upstream routing & Freeze/Thaw failover | TBD |
-| **Phase 4** | Distributed state store & horizontal cluster | TBD |
+| Phase | Focus | Status | Branch | Result |
+|-------|-------|--------|--------|--------|
+| **Phase 1** | Connection handling & sharded session management | ✅ **Implemented** | `phase-1-core-engine` | [Phase 1 result](docs/implementation/phase-1-result.md) |
+| **Phase 2** | Ring buffering & backpressure | ✅ **Implemented** | `phase-2-ring-buffer` | [Phase 2 result](docs/implementation/phase-2-result.md) |
+| **Phase 3** | Dynamic routing & Freeze/Thaw failover | ✅ **Implemented** | `phase-3-failover-routing` | [Phase 3 result](docs/implementation/phase-3-result.md) |
+| **Phase 4** | Distributed state & horizontal cluster | ✅ **Implemented** | `phase-4-distributed-cluster` | [Phase 4 result](docs/implementation/phase-4-result.md) |
 
-See the full [Implementation Plan](docs/implementation/README.md) for Definition of Done criteria per phase.
+All phases are implemented with passing unit tests. Remaining work is tracked per-phase:
+
+- **Benchmark gates** — zero-alloc hot-path benchmarks pending Go toolchain installation
+- **Integration tests** — full binary tests with etcd testcontainers and multi-node clusters
+- **CI/CD** — GitHub Actions workflow for automated lint, test, bench gates
+- **Operations** — runbooks, Prometheus alerting rules, Grafana dashboards
+
+See the [Implementation Plan](docs/implementation/README.md) for Definition of Done criteria per phase.
 
 ---
 
