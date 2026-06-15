@@ -13,7 +13,7 @@
 
 ## Status
 
-> **Early development.** The project is in the design and planning phase. Application code has not been implemented yet. See [Implementation Plan](docs/implementation/README.md) for the phased roadmap.
+> **Implementation complete.** All four phases (Core Engine → Ring Buffer → Failover Routing → Distributed Cluster) are implemented across dedicated branches with passing unit tests. See the [Implementation Plan](docs/implementation/README.md) for details and [AGENTS.md](AGENTS.md) for branch references.
 
 ---
 
