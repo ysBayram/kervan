@@ -27,4 +27,10 @@ failover:
   drain_timeout: 30s
   error_rate_window: 5s
   error_rate_threshold: 0.5
+coordination:
+  backend: etcd
+  lease_ttl: 930s
+  lease_refresh_every: 300s
+  degrade_probe_interval: 5s
+  degrade_threshold: 3
 metrics_addr: ":9090"

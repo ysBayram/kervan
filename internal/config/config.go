@@ -7,14 +7,23 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type CoordinationConfig struct {
+	Backend              string        `yaml:"backend"`
+	LeaseTTL             time.Duration `yaml:"lease_ttl"`
+	LeaseRefreshEvery    time.Duration `yaml:"lease_refresh_every"`
+	DegradeProbeInterval time.Duration `yaml:"degrade_probe_interval"`
+	DegradeThreshold     int           `yaml:"degrade_threshold"`
+}
+
 type Config struct {
-	NodeID      string           `yaml:"node_id"`
-	Listeners   []ListenerConfig `yaml:"listeners"`
-	Upstream    UpstreamConfig   `yaml:"upstream"`
-	Session     SessionConfig    `yaml:"session"`
-	Buffer      BufferConfig     `yaml:"buffer"`
-	Failover    FailoverConfig   `yaml:"failover"`
-	MetricsAddr string           `yaml:"metrics_addr"`
+	NodeID       string             `yaml:"node_id"`
+	Listeners    []ListenerConfig   `yaml:"listeners"`
+	Upstream     UpstreamConfig     `yaml:"upstream"`
+	Session      SessionConfig      `yaml:"session"`
+	Buffer       BufferConfig       `yaml:"buffer"`
+	Failover     FailoverConfig     `yaml:"failover"`
+	Coordination CoordinationConfig `yaml:"coordination"`
+	MetricsAddr  string             `yaml:"metrics_addr"`
 }
 
 type ListenerConfig struct {
